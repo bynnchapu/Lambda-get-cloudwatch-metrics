@@ -4,7 +4,7 @@ import boto3
 
 MISSING_DATA_MESSAGE = 'metric is missing'
 
-def get_cloudwatch_metrics(query_data):
+def get_cloudwatch_metric(query_data):
     client = boto3.client('cloudwatch')
     response = client.get_metric_data(
         MetricDataQueries=[
@@ -32,7 +32,7 @@ def get_cloudwatch_metrics(query_data):
 
 
 def lambda_handler(event, context):
-    metric_value = get_cloudwatch_metrics(event['query_data'])
+    metric_value = get_cloudwatch_metric(event['query_data'])
     status_code = 200 if metric_value is not MISSING_DATA_MESSAGE else 500
     return_data = {
         'status_code': status_code,
