@@ -2,7 +2,7 @@ import json
 import datetime
 import boto3
 
-UNDEFINED_MESSAGE = 'metric is undefined'
+MISSING_DATA_MESSAGE = 'metric is missing'
 
 def get_cloudwatch_metrics(query_data):
     client = boto3.client('cloudwatch')
@@ -28,12 +28,12 @@ def get_cloudwatch_metrics(query_data):
     if len(response['MetricDataResults'][0]['Values']) != 0:
         return response['MetricDataResults'][0]['Values'][0]
     else:
-        return UNDEFINED_MESSAGE
+        return MISSING_DATA_MESSAGE
 
 
 def lambda_handler(event, context):
     metric_value = get_cloudwatch_metrics(event['query_data'])
-    status_code = 200 if metric_value is not UNDEFINED_MESSAGE else 500
+    status_code = 200 if metric_value is not MISSING_DATA_MESSAGE else 500
     return_data = {
         'status_code': status_code,
         'value': metric_value
