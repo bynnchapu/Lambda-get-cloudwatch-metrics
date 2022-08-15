@@ -11,6 +11,120 @@ Resources:
       Timeout: 20
       Role: !GetAtt Role.Arn
       CodeUri: src/
+      Events:
+        EventECSBlogWordpressCPU:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+            Input: >-
+              {
+                "query_data": {
+                  "Namespace": "AWS/ECS",
+                  "MetricName": "CPUUtilization",
+                  "Dimensions": [
+                    {
+                      "Name": "ClusterName",
+                      "Value": "Blog"
+                    },
+                    {
+                      "Name": "ServiceName",
+                      "Value": "Wordpress"
+                    }
+                  ],
+                  "Period": 300,
+                  "Stat": "Average"
+                },
+                "target": {
+                  "host": "ECS-Blog-Wordpress",
+                  "key": "ECS.CPUUtilization"
+                }
+              }
+        EventECSBlogWordpressMemory:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+            Input: >-
+              {
+                "query_data": {
+                  "Namespace": "AWS/ECS",
+                  "MetricName": "MemoryUtilization",
+                  "Dimensions": [
+                    {
+                      "Name": "ClusterName",
+                      "Value": "Blog"
+                    },
+                    {
+                      "Name": "ServiceName",
+                      "Value": "Wordpress"
+                    }
+                  ],
+                  "Period": 300,
+                  "Stat": "Average"
+                },
+                "target": {
+                  "host": "ECS-Blog-Wordpress",
+                  "key": "ECS.MemoryUtilization"
+                }
+              }
+        EventECSZabbixServerCPU:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+            Input: >-
+              {
+                "query_data": {
+                  "Namespace": "AWS/ECS",
+                  "MetricName": "CPUUtilization",
+                  "Dimensions": [
+                    {
+                      "Name": "ClusterName",
+                      "Value": "Zabbix"
+                    },
+                    {
+                      "Name": "ServiceName",
+                      "Value": "Server"
+                    }
+                  ],
+                  "Period": 300,
+                  "Stat": "Average"
+                },
+                "target": {
+                  "host": "ECS-Zabbix-Server",
+                  "key": "ECS.CPUUtilization"
+                }
+              }
+        EventECSZabbixServerMemory:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+            Input: >-
+              {
+                "query_data": {
+                  "Namespace": "AWS/ECS",
+                  "MetricName": "MemoryUtilization",
+                  "Dimensions": [
+                    {
+                      "Name": "ClusterName",
+                      "Value": "Zabbix"
+                    },
+                    {
+                      "Name": "ServiceName",
+                      "Value": "Server"
+                    }
+                  ],
+                  "Period": 300,
+                  "Stat": "Average"
+                },
+                "target": {
+                  "host": "ECS-Zabbix-Server",
+                  "key": "ECS.MemoryUtilization"
+                }
+              }
+      EventInvokeConfig:
+        DestinationConfig:
+          OnSuccess:
+            Destination: !ImportValue Lambda-Send-Value-to-Zabbix-ARN
+            Type: Lambda
 
   Role:
     Type: AWS::IAM::Role
@@ -26,9 +140,26 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+        - !Ref PolicyAllowInvokeLambda
+  PolicyAllowInvokeLambda:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource: !ImportValue Lambda-Send-Value-to-Zabbix-ARN
 
   Logs:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${Function}
       RetentionInDays: 7
+
+Outputs:
+  ARN:
+    Value: !GetAtt Function.Arn
+    Export:
+      Name: Lambda-Get-Cloudwatch-metrics-ARN
