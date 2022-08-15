@@ -1,4 +1,3 @@
-import json
 import datetime
 import boto3
 
@@ -33,7 +32,7 @@ def get_cloudwatch_metric(query_data):
 
 def lambda_handler(event, context):
     print('=== Input DATA ===')
-    print(json.dumps(event))
+    print(event)
 
     metric_value = get_cloudwatch_metric(event['query_data'])
     status_code = 200 if metric_value is not MISSING_DATA_MESSAGE else 500
@@ -43,5 +42,5 @@ def lambda_handler(event, context):
     }
 
     print('=== Output DATA ===')
-    print(json.dumps(return_data))
-    return json.dumps(return_data)
+    print(return_data)
+    return return_data
